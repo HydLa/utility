@@ -1,0 +1,166 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+file_extensions:
+  - hydla
+scope: source.hydla
+
+contexts:
+  # The prototype context is prepended to all contexts but those setting
+  # meta_include_prototype: false.
+  prototype:
+    - include: comments
+
+  main:
+    # The main context is the initial starting point of our syntax.
+    # Include other contexts from here (or specify them directly).
+    - include: keywords
+    - include: constraint
+    - include: list
+    - include: builtin_fns
+    - include: variable_leftlim
+    - include: variable
+    - include: numbers
+    - include: logic_ops
+    - include: builtin_consts
+
+  keywords:
+    # Keywords are if, else for and while.
+    # Note that blackslashes don't need to be escaped within single quoted
+    # strings in YAML. When using single quoted strings, only single quotes
+    # need to be escaped: this is done by using two single quotes next to each
+    # other.
+    - match: '<<|=>|<=>|:=|\bASSERT\b'
+      scope: keywords.hydla
+
+  constraint:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\b[A-Z][A-Z0-9_]*\s*\((?=[^\)]*\)\s*<=>)'
+      scope: constraint.definition.hydla
+      push: constraint_definition_args
+    - match: '\b[A-Z][A-Z0-9_]*\s*\((?=[^\)]*\)\s*(<<|,|\)|\||\.))'
+      scope: constraint.layer.hydla
+      push: constraint_layer_args
+    - match: '\b[A-Z][A-Z0-9_]*(?=\s*(<=>|{))'
+      scope: constraint.definition.hydla
+    - match: '\b[A-Z][A-Z0-9_]*(?=\s*(<<|,|\)|\||\.))'
+      scope: constraint.layer.hydla
+
+  constraint_definition_args:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\)\s*(?=\s*<=>)'
+      scope: constraint.definition.hydla
+      pop: true
+    - match: '[^\,]'
+      scope: constraint.args.hydla
+
+  constraint_layer_args:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - include: list
+    - include: builtin_fns
+    - include: variable_leftlim
+    - include: variable
+    - include: numbers
+    - include: builtin_consts
+    - match: '\)\s*(?=\s*(<<|,|\)|\||\.))'
+      scope: constraint.layer.hydla
+      pop: true
+
+  list:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\|\s*[A-Z][A-Z0-9_]*\s*\|'
+      scope: list.length.hydla
+    - match: '\b[A-Z][A-Z0-9_]*(?=\s*:=)'
+      scope: list.definition.hydla
+    - match: '\b[A-Z][A-Z0-9_]*\s*\['
+      scope: list.element.hydla
+      push: list_args
+    - match: '\{'
+      scope: list.inside.hydla
+      push: inside_list
+
+  list_args:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - include: list
+    - include: builtin_fns
+    - include: variable_leftlim
+    - include: variable
+    - include: numbers
+    - include: builtin_consts
+    - match: '\]'
+      scope: list.element.hydla
+      pop: true
+
+  inside_list:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '(in|\.\.)'
+      scope: logic_ops.hydla
+    - match: '\}'
+      scope: list.inside.hydla
+      pop: true
+    - include: main
+
+  variable_leftlim:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\b[a-z][a-z0-9_]*''*-(?=\s*[^A-Za-z0-9])'
+      scope: variable_leftlim.hydla
+
+  variable:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\b[a-z][a-z0-9_]*''*'
+      scope: variable.hydla
+
+  numbers:
+    - match: '\b[0-9.]+\b'
+      scope: constant.hydla
+
+  logic_ops:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\||&|/\\|\\/|\[\]'
+      scope: logic_ops.hydla
+
+  builtin_consts:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\b(Pi|E)\b|\$(t|timer|TRUE)\b'
+      scope: builtin_consts.hydla
+
+  builtin_fns:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character.
+    - match: '\b(a?(sin|cos|tan)|l(n|og)|or|and|sum)\s*\('
+      scope: builtin_fns.hydla
+      push: inside_fns
+
+  inside_fns:
+    - include: list
+    - include: builtin_fns
+    - include: variable_leftlim
+    - include: variable
+    - include: numbers
+    - include: builtin_consts
+    - match: '\('
+      scope: builtin_fns.hydla
+      push: inside_fns
+    - match: '\)'
+      scope: builtin_fns.hydla
+      pop: true
+
+  comments:
+    # Comments begin with a '//' and finish at the end of the line.
+    - match: '//'
+      scope: comment.hydla
+      push:
+        # This is an anonymous context push for brevity.
+        - meta_scope: comment.hydla
+        - match: $\n?
+          pop: true
