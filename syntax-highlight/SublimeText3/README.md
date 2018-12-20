@@ -16,3 +16,5 @@ Mac:
 Linux:
 
 /home/(user name)/.config/sublime-text-3/Packages/User
+
+Change color Scheme into HydLa
